@@ -65,7 +65,7 @@ pre.sourceCode {
   border-width: 1px;
   border-style: solid;
   padding: 10px;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 code.sourceCode span.kw { color: #007020; font-weight: bold; }
 code.sourceCode span.dt { color: #902000; }
