@@ -253,3 +253,5 @@ of reasoning.
    is no need for a bundler at all. This is a lot different from when I last
    attempted to combine the two technologies and I'm super excited and motivated
    to continue exploring and writing native applications in PureScript.
+
+   The code for this blogpost is uploaded to [[https://github.com/kRITZCREEK/electron-apps-with-purescript][Github]].
