@@ -169,7 +169,7 @@ of reasoning.
      import Thermite as T
      import Control.Monad.Eff (Eff)
      import Control.Monad.Eff.Exception (try)
-     import DOM (DOM) as DOM
+     import DOM (DOM)
      import DOM.HTML (window) as DOM
      import DOM.HTML.Types (htmlDocumentToParentNode) as DOM
      import DOM.HTML.Window (document) as DOM
@@ -208,14 +208,14 @@ of reasoning.
    Last is our main function in which we first grab all the file names inside
    the current directory.
    #+BEGIN_SRC haskell
-     main :: Eff (fs :: FS, dom :: DOM.DOM) Unit
+     main :: Eff (fs :: FS, dom :: DOM) Unit
      main = void do
        filePaths <- either (const []) id <$> try (readdir ".")
    #+END_SRC
    We then create a React class out of our Spec and since our component is
    stateless, we just pass ~unit~ as the initial state.
    #+BEGIN_SRC haskell
-       let component = T.createClass ourSpec unit
+       let component = T.createClass dirListingComponent unit
    #+END_SRC
    Next up is some boilerplate to grab the body element of of our page. This is
    considered bad practice and React will warn us, but it could easily be
