@@ -210,7 +210,7 @@ of reasoning.
    #+BEGIN_SRC haskell
      main :: Eff (fs :: FS, dom :: DOM) Unit
      main = void do
-       filePaths <- either (const []) id <$> try (readdir ".")
+       fileNames <- either (const []) id <$> try (readdir ".")
    #+END_SRC
    We then create a React class out of our Spec and since our component is
    stateless, we just pass ~unit~ as the initial state.
