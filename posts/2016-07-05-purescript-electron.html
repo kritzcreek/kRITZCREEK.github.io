@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>kRITZCREEK's Blog - Electron Apps with PureScript</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link href="https://fonts.googleapis.com/css?family=Fira+Mono|Gentium+Basic" rel="stylesheet">
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">kRITZCREEK's Blog</a>
+            </div>
+            <div id="navigation">
+                <a href="../">Home</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../archive.html">Archive</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Electron Apps with PureScript</h1>
+
+            <div class="info">
+    Posted on July  5, 2016
+    
+</div>
+
+<p>I’ve recently taken another look at the <a href="http://electron.atom.io">Electron Framework</a> for building native applications using web technologies, in particular, the <a href="http://purescript.org">PureScript</a> programming language.</p>
+<p>To my enjoyment there has been lots of progress since I last checked and starting an Electron project with PureScript is simpler than ever. In this blogpost I’ll show you how to:</p>
+<ol>
+<li>Set up a new Electron project</li>
+<li>Add a little PureScript</li>
+<li>Freely mix Node and Browser API’s</li>
+<li>Add the <a href="https://github.com/paf31/purescript-thermite">Thermite</a> library and build a minimal React application</li>
+</ol>
+<h2 id="prerequisits">Prerequisits</h2>
+<p>To follow along you’ll want to install:</p>
+<ul>
+<li>System things:
+<ul>
+<li>git</li>
+<li>node</li>
+</ul></li>
+<li>Node things:
+<ul>
+<li><code>npm install -g purescript bower pulp</code></li>
+</ul></li>
+</ul>
+<h2 id="setting-up-a-new-electron-project">Setting up a new Electron Project</h2>
+<p>Following the <em>Getting started</em> path for Electron leads to the <a href="https://github.com/electron/electron-quick-start">electron-quick-start</a> repository. We can use it to bootstrap a new Electron project like so:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="co"># Clone the Quick Start repository</span>
+$ <span class="kw">git</span> clone https://github.com/electron/electron-quick-start
+
+<span class="co"># Go into the repository</span>
+$ <span class="kw">cd</span> electron-quick-start
+
+<span class="co"># Install the dependencies and run</span>
+$ <span class="kw">npm</span> install <span class="kw">&amp;&amp;</span> <span class="kw">npm</span> start</code></pre></div>
+<p>This should greet you with a simple Electron Application like so:</p>
+<p><img src="../images/electron-quick-start.png" /></p>
+<p>A few things to note right away:</p>
+<ul>
+<li>We can reload the Application using the Menu with <em>View -&gt; Reload</em></li>
+<li>We get to use the awesome <em>Chrome-Dev-Tools</em> for developing native applications</li>
+<li>Screw the default browser styles…</li>
+</ul>
+<p>Let’s take a look at the directory structure of our project:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">&gt;</span> <span class="kw">ls</span> -1
+<span class="kw">LICENSE.md</span>
+<span class="kw">README.md</span>
+<span class="kw">index.html</span>
+<span class="kw">main.js</span>
+<span class="kw">node_modules</span>
+<span class="kw">package.json</span>
+<span class="kw">renderer.js</span></code></pre></div>
+<p>Pretty simple, huh? We’ve got the entry point for our application <code>main.js</code>, an HTML file we can load up in the window that <code>main.js</code> creates, and an empty JS file <code>renderer.js</code> that gets require’d from that HTML file.</p>
+<p>I’ll not go into detail about any of those however, since this setup is already enough for us to…</p>
+<h2 id="add-a-little-purescript">Add a little PureScript</h2>
+<p>The usual way to start a PureScript project is <code>pulp init</code>, but since we’ve already done some scaffolding that won’t work this time. Instead we’ll do the few steps by hand.</p>
+<p>We start by setting up a bower file to manage our PureScript dependencies:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">bower</span> init</code></pre></div>
+<p>After confirming, or modifying some of bower’s questions we can install the <code>purescript-console</code> library to prepare for our <strong>Hello Electron</strong>.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">bower</span> install --save purescript-console</code></pre></div>
+<p>Next up we’ll create a simple PureScript module at <code>src/Main.purs</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">module</span> <span class="dt">Main</span> <span class="kw">where</span>
+
+<span class="kw">import </span><span class="dt">Control.Monad.Eff.Console</span> (log)
+
+main <span class="fu">=</span> log <span class="st">&quot;Hello, Electron&quot;</span></code></pre></div>
+<p>and compile it with</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">pulp</span> build</code></pre></div>
+<p>By default the PureScript compilers emits CommonJS modules into the <code>output/</code> directory. If we want to run these in a browser we usually have to use a bundling tool like <em>Webpack</em> or <em>psc-bundle</em>. Luckily Electron knows how to deal with the CommonJS format and so we can just put the following line into the <code>renderer.js</code> file and reload our Electron application.</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="at">require</span>(<span class="st">'./output/Main'</span>).<span class="at">main</span>()</code></pre></div>
+<p>If you open the <em>Console</em> tab inside the Chrome Dev Tools you should be greeted with <code>Hello, Electron</code>. <em>YAY!</em></p>
+<h2 id="effects-and-environments">Effects and Environments</h2>
+<p>In PureScript we use the built-in rowtypes to track the effects of our programs. A program with a signature like <code>Eff (dom :: DOM) Unit</code> tells us, that the program accesses the DOM (Document Object Model). It also tells us that we cannot use this program inside a node interpreter, since it relies on the DOM being present. On the other hand a signature like <code>Eff (fs :: FS) Unit</code>, where <code>FS</code> is the <em>file system</em> effect, tells us that this program can not be run inside the browser, as file system access is only available inside a nodejs interpreter.</p>
+<p>So usually when we encounter a signature like <code>Eff (fs :: FS, dom :: DOM) Unit</code> we are looking at a useless program that can neither be run in the browser, nor inside the nodejs interpreter.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
+<h2 id="enter-electron">Enter Electron</h2>
+<p>Electron’s secret sauce, is that it allows you to access both the Node and the Browser API’s in your programs at the same time. Let’s see how can we utilize these capabilities in a seamless manner with PureScript. We’re going to write a program, that reads the current directory and displays all the found files as an unordered list. Eventhough it’s totally overkill for this example we’ll be using the <a href="https://github.com/paf31/purescript-thermite">purescript-thermite</a> library to render our webpage.</p>
+<p>Thermite is a lightweight wrapper (350 lines including docstrings) around the React library. Since we’re looking to access the file system we’ll also need to install some node bindings.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">npm</span> install --save react react-dom
+$ <span class="kw">bower</span> install --save purescript-thermite 
+$ <span class="kw">bower</span> install --save purescript-node-fs</code></pre></div>
+<p>Next up is modifying our Main module. PureScript’s ecosystem embraces modularity, which means we have to get a few imports out of the way first.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">  <span class="kw">module</span> <span class="dt">Main</span> <span class="kw">where</span>
+
+  <span class="kw">import </span><span class="dt">Prelude</span>
+  <span class="kw">import </span><span class="dt">React</span> <span class="kw">as</span> <span class="dt">R</span>
+  <span class="kw">import </span><span class="dt">ReactDOM</span> <span class="kw">as</span> <span class="dt">RDOM</span>
+  <span class="kw">import </span><span class="dt">Thermite</span> <span class="kw">as</span> <span class="dt">T</span>
+  <span class="kw">import </span><span class="dt">Control.Monad.Eff</span> (<span class="dt">Eff</span>)
+  <span class="kw">import </span><span class="dt">Control.Monad.Eff.Exception</span> (try)
+  <span class="kw">import </span><span class="dt">DOM</span> (<span class="dt">DOM</span>)
+  <span class="kw">import </span><span class="dt">DOM.HTML</span> (window) <span class="kw">as</span> <span class="dt">DOM</span>
+  <span class="kw">import </span><span class="dt">DOM.HTML.Types</span> (htmlDocumentToParentNode) <span class="kw">as</span> <span class="dt">DOM</span>
+  <span class="kw">import </span><span class="dt">DOM.HTML.Window</span> (document) <span class="kw">as</span> <span class="dt">DOM</span>
+  <span class="kw">import </span><span class="dt">DOM.Node.ParentNode</span> (querySelector) <span class="kw">as</span> <span class="dt">DOM</span>
+  <span class="kw">import </span><span class="dt">Data.Either</span> (either)
+  <span class="kw">import </span><span class="dt">Data.Maybe</span> (fromJust)
+  <span class="kw">import </span><span class="dt">Data.Nullable</span> (toMaybe)
+  <span class="kw">import </span><span class="dt">Node.FS</span> (<span class="dt">FS</span>)
+  <span class="kw">import </span><span class="dt">Node.FS.Sync</span> (readdir)
+  <span class="kw">import </span><span class="dt">Partial.Unsafe</span> (unsafePartial)
+  <span class="kw">import </span><span class="dt">React.DOM</span> (text, li', ul')</code></pre></div>
+<p>We’ll use React’s props mechanism to pass the list of file names to our component, so we’ll define a type for that first</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">  <span class="kw">type</span> <span class="dt">FileNames</span> <span class="fu">=</span> {<span class="ot">names ::</span> <span class="dt">Array</span> <span class="dt">String</span>}</code></pre></div>
+<p>Next up we’re defining the <em>Spec</em> for our directory listing component. Because we don’t support any actions, we just pass <code>defaultPerformAction</code> and our <code>render</code> function is pretty simple aswell. We use map to turn our list of names into a list of <code>&lt;li&gt;</code>’s and wrap it inside a <code>&lt;ul&gt;</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">  dirListingComponent 
+<span class="ot">    ::</span> forall eff<span class="fu">.</span> <span class="dt">T.Spec</span> eff <span class="dt">Unit</span> <span class="dt">FileNames</span> <span class="dt">Unit</span>
+  dirListingComponent <span class="fu">=</span>
+    T.simpleSpec T.defaultPerformAction render
+    <span class="kw">where</span> render _ props _ _ <span class="fu">=</span>
+            [ ul'
+              (map (\file <span class="ot">-&gt;</span> li' [text file]) props<span class="fu">.</span>names)
+            ]</code></pre></div>
+<p>Last is our main function in which we first grab all the file names inside the current directory.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">  main ::</span> <span class="dt">Eff</span> (<span class="ot">fs ::</span> <span class="dt">FS</span>,<span class="ot"> dom ::</span> <span class="dt">DOM</span>) <span class="dt">Unit</span>
+  main <span class="fu">=</span> void <span class="kw">do</span>
+    fileNames <span class="ot">&lt;-</span> either (const []) id <span class="fu">&lt;$&gt;</span> try (readdir <span class="st">&quot;.&quot;</span>)</code></pre></div>
+<p>We then create a React class out of our Spec and since our component is stateless, we just pass <code>unit</code> as the initial state.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">    <span class="kw">let</span> component <span class="fu">=</span> T.createClass dirListingComponent unit</code></pre></div>
+<p>Next up is some boilerplate to grab the body element of of our page. This is considered bad practice and React will warn us, but it could easily be fixed by adding a <em>container element</em> inside <code>index.html</code> and grabbing that for rendering. For the sake of this blogpost body is fine though.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">    document <span class="ot">&lt;-</span> DOM.window <span class="fu">&gt;&gt;=</span> DOM.document
+    container <span class="ot">&lt;-</span>
+      unsafePartial
+      (fromJust <span class="fu">&lt;&lt;&lt;</span> toMaybe
+      <span class="fu">&lt;$&gt;</span> DOM.querySelector <span class="st">&quot;body&quot;</span>
+      (DOM.htmlDocumentToParentNode document))</code></pre></div>
+<p>Finally we tell React to render our component into the body of the webpage, and pass the file names that we grabbed earlier.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">    RDOM.render
+      (R.createFactory component {names<span class="fu">:</span> fileNames})
+      container</code></pre></div>
+<p>If everything went well, all that’s left now, is to run <code>pulp build</code> and refresh our Electron application.</p>
+<p><em>Tada!</em> <img src="../images/file-names-electron.png" /></p>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>I think Electron is an amazing opportunity for PureScript. It allows us to take our <em>m</em> browser-libraries, our <em>n</em> node-libraries and create <em>n x m</em> new libraries and applications. PureScript’s openness and good FFI story let us benefit from all the amazing work the JS community brings forth.</p>
+<p>I was surprised at how easy it was it integrate Thermite into Electron. There is no need for a bundler at all. This is a lot different from when I last attempted to combine the two technologies and I’m super excited and motivated to continue exploring and writing native applications in PureScript.</p>
+<p>The code for this blogpost is uploaded to <a href="https://github.com/kRITZCREEK/electron-apps-with-purescript">Github</a>.</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Interpreting the effect system this way is also called <em>Coeffects</em>, since we’re specifying the <em>capabilities</em> an Environment needs to provide, instead of the <em>effects</em> our program will have on the world when run. I’d highly recommend you check out <a href="http://tomasp.net/coeffects/">Coeffects</a> by Thomas Petricek if you want to read more about this kind of reasoning.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
